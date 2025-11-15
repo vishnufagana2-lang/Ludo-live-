@@ -1,3 +1,3 @@
 function startGame() {
-    alert("Ludo game start ho gaya!");
+    alert("Ludo game started!");
 }
