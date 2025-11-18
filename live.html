@@ -1,15 +1,249 @@
-<!doctype html>
-<html lang="hi">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Live Matches</title><link rel="stylesheet" href="style.css"></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Game — Ludo Live</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:0;padding:20px;background:#f7f7f8;color:#111}
+    h1{text-align:center;margin-bottom:10px}
+    .container{max-width:720px;margin:10px auto;background:#fff;border-radius:10px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+    input,button,select{padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:15px}
+    button{cursor:pointer;background:#0b69ff;color:#fff;border:0}
+    .muted{color:#666;font-size:14px}
+    .board{margin-top:14px;background:#fafafa;padding:12px;border-radius:8px;border:1px dashed #ddd}
+    .cells{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+    .cell{height:40px;background:#fff;border:1px solid #e3e3e3;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:600}
+    .tokens{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .token{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .token.p1{background:#ff4d4d}
+    .token.p2{background:#2ecc71}
+    .log{height:120px;overflow:auto;background:#111;color:#fff;padding:8px;border-radius:6px;font-size:13px}
+    .hidden{display:none}
+    .center{text-align:center}
+  </style>
+</head>
 <body>
-  <header class="header"><h2 class="logo">Live Matches</h2></header>
-  <main style="padding:20px">
-    <h2>Live Matches</h2>
-    <p>Currently no live matches (demo).</p>
-    <button onclick="alert('Join live match (demo)')">Join Live</button>
-    <p style="margin-top:18px"><a href="index.html">‹ Back to Home</a></p>
-  </main>
-  <script src="script.js"></script>
+  <h1>Start Live Game</h1>
+
+  <div class="container">
+    <!-- room controls -->
+    <div class="row">
+      <button id="createRoomBtn">🔧 Create Room</button>
+      <input id="roomCodeInput" placeholder="Room code (for join)" />
+      <button id="joinRoomBtn">🔗 Join Room</button>
+      <select id="playerSelect">
+        <option value="player1">Player 1 (Host)</option>
+        <option value="player2">Player 2</option>
+      </select>
+    </div>
+    <div class="row muted center">
+      <div id="roomInfo">No room yet</div>
+    </div>
+
+    <!-- game controls -->
+    <div class="row">
+      <button id="startGameBtn" disabled>▶️ Start Game</button>
+      <button id="rollDiceBtn" disabled>🎲 Roll Dice</button>
+      <div class="muted" id="turnInfo">Turn: -</div>
+    </div>
+
+    <!-- board preview -->
+    <div class="board">
+      <div class="cells" id="boardCells"></div>
+      <div class="tokens" id="tokensArea"></div>
+    </div>
+
+    <!-- simple controls for moving tokens -->
+    <div class="row">
+      <label>Move token for: </label>
+      <select id="movePlayer">
+        <option value="player1">Player 1</option>
+        <option value="player2">Player 2</option>
+      </select>
+      <input id="moveSteps" type="number" min="1" placeholder="steps" style="width:110px" />
+      <button id="moveBtn">Move Token</button>
+    </div>
+
+    <h3 style="margin-top:12px">Game Log</h3>
+    <div class="log" id="log"></div>
+
+    <div style="margin-top:12px" class="muted">
+      Note: Ye simple client-side demo hai. Room code local generate hota hai (no server). Same device pe multiple tabs se join karke test kar sakte ho.
+    </div>
+  </div>
+
+<script>
+/*
+ Simple client-only live game demo:
+ - Create room -> generates short code
+ - Join using that code on same device (or other tab)
+ - Start game => alternate turns
+ - Roll dice (1-6) and move tokens using "Move Token" button
+ This is front-end only — no real networking.
+*/
+
+const createRoomBtn = document.getElementById('createRoomBtn');
+const joinRoomBtn = document.getElementById('joinRoomBtn');
+const roomCodeInput = document.getElementById('roomCodeInput');
+const roomInfo = document.getElementById('roomInfo');
+const startGameBtn = document.getElementById('startGameBtn');
+const rollDiceBtn = document.getElementById('rollDiceBtn');
+const turnInfo = document.getElementById('turnInfo');
+const logEl = document.getElementById('log');
+const boardCells = document.getElementById('boardCells');
+const tokensArea = document.getElementById('tokensArea');
+const playerSelect = document.getElementById('playerSelect');
+const movePlayer = document.getElementById('movePlayer');
+const moveSteps = document.getElementById('moveSteps');
+const moveBtn = document.getElementById('moveBtn');
+
+let room = null;
+let state = null;
+
+// make board (10x2 = 20 cells)
+function renderBoard(){
+  boardCells.innerHTML = '';
+  for(let i=1;i<=20;i++){
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.dataset.index = i;
+    c.textContent = i;
+    boardCells.appendChild(c);
+  }
+}
+renderBoard();
+
+function log(msg){
+  const time = new Date().toLocaleTimeString();
+  logEl.innerHTML = `<div>[${time}] ${msg}</div>` + logEl.innerHTML;
+}
+
+// create small room code
+function makeCode(){
+  return Math.random().toString(36).slice(2,7).toUpperCase();
+}
+
+createRoomBtn.onclick = ()=>{
+  const code = makeCode();
+  room = { code, host: (playerSelect.value==='player1'?'player1':'player2'), players: {}, started:false };
+  // host automatically joins as selected
+  const self = playerSelect.value;
+  room.players[self] = { name: self, pos: 0 };
+  roomInfo.textContent = `Room: ${code} | Host: ${room.host} | Joined: ${Object.keys(room.players).length}`;
+  roomCodeInput.value = code;
+  startGameBtn.disabled = false;
+  log(`Room ${code} created by ${self}`);
+};
+
+joinRoomBtn.onclick = ()=>{
+  const code = roomCodeInput.value.trim().toUpperCase();
+  if(!code){ alert('Enter room code'); return; }
+  // simple demo: if local room exists and code matches -> join
+  if(!room || room.code !== code){
+    alert('Room not found in this demo. (Create room first on same device/tab)');
+    return;
+  }
+  const who = playerSelect.value;
+  room.players[who] = { name: who, pos: 0 };
+  roomInfo.textContent = `Room: ${code} | Host: ${room.host} | Joined: ${Object.keys(room.players).length}`;
+  log(`${who} joined room ${code}`);
+};
+
+// start game
+startGameBtn.onclick = ()=>{
+  if(!room){ alert('Create room first'); return; }
+  if(Object.keys(room.players).length < 2){ alert('Need 2 players to start (join as player1 and player2)'); return; }
+  room.started = true;
+  state = { turn: 'player1', dice: 0 };
+  startGameBtn.disabled = true;
+  rollDiceBtn.disabled = false;
+  turnInfo.textContent = `Turn: ${state.turn}`;
+  log('Game started!');
+  renderTokens();
+};
+
+// dice roll
+rollDiceBtn.onclick = ()=>{
+  if(!state || !room.started) return;
+  const d = Math.floor(Math.random()*6)+1;
+  state.dice = d;
+  log(`${state.turn} rolled ${d}`);
+  // auto-fill moveSteps for convenience
+  moveSteps.value = d;
+};
+
+// render tokens area (show current positions)
+function renderTokens(){
+  tokensArea.innerHTML = '';
+  if(!room) return;
+  for(const p of Object.keys(room.players)){
+    const data = room.players[p];
+    const div = document.createElement('div');
+    div.className = 'token '+(p==='player1'?'p1':'p2');
+    div.textContent = (p==='player1'?'P1':'P2') + '\n';
+    div.title = `${p} → pos ${data.pos}`;
+    tokensArea.appendChild(div);
+    // highlight on board
+    const idx = data.pos || 0;
+    // remove highlight from all cells first
+  }
+  // update cell highlights
+  document.querySelectorAll('.cell').forEach(c=>c.style.boxShadow='none');
+  for(const p of Object.keys(room.players)){
+    const pos = room.players[p].pos;
+    if(pos>=1){
+      const cell = document.querySelector('.cell[data-index="'+pos+'"]');
+      if(cell) cell.style.boxShadow = `0 0 0 3px ${p==='player1'?'rgba(255,77,77,0.25)':'rgba(46,204,113,0.25)'}`;
+    }
+  }
+}
+
+// move token button
+moveBtn.onclick = ()=>{
+  if(!room || !room.started){ alert('Game not started'); return; }
+  const who = movePlayer.value;
+  const steps = parseInt(moveSteps.value,10);
+  if(!steps || steps<=0){ alert('Enter steps'); return; }
+  if(state.turn !== who){ alert('Not your turn'); return; }
+  // move
+  const prev = room.players[who].pos || 0;
+  let next = prev + steps;
+  if(next>20) next = 20; // cap
+  room.players[who].pos = next;
+  log(`${who} moved ${steps} steps → ${next}`);
+  renderTokens();
+  // check win
+  if(next===20){
+    log(`🎉 ${who} reached end and WON!`);
+    rollDiceBtn.disabled = true;
+    startGameBtn.disabled = false;
+    room.started = false;
+    turnInfo.textContent = `Winner: ${who}`;
+    return;
+  }
+  // switch turn
+  state.turn = (state.turn==='player1'?'player2':'player1');
+  turnInfo.textContent = `Turn: ${state.turn}`;
+  // auto disable roll if not host (we're in demo single-client)
+};
+
+// also allow clicking a cell to move there (for quick testing)
+boardCells.addEventListener('click', (e)=>{
+  const c = e.target.closest('.cell');
+  if(!c || !room || !room.started) return;
+  const idx = Number(c.dataset.index);
+  // move selected player to clicked position (for testing only)
+  const who = movePlayer.value;
+  room.players[who].pos = idx;
+  log(`${who} jumped to ${idx}`);
+  renderTokens();
+});
+
+// keep tokens in sync when room changes
+setInterval(()=>{ if(room) renderTokens(); },500);
+
+</script>
 </body>
 </html>
