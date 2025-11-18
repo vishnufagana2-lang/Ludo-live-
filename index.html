@@ -1,25 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ludo Live</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Star Ludo</title>
+<style>
+  :root{
+    --primary:#0fb48b;
+    --dark:#0b2633;
+    --accent:#00a3ff;
+    --card-bg:#071826;
+    --muted:#6b7280;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:#f3f7fa;color:#07212a}
+  /* top header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(90deg,#0b6b6b,#0a9a8a);color:var(--white)}
+  .logo{display:flex;gap:10px;align-items:center}
+  .logo .mark{width:44px;height:44px;border-radius:8px;background:radial-gradient(circle at 25% 25%,#ffd54a,#ff7a18);display:flex;align-items:center;justify-content:center;font-weight:800;color:#08343a}
+  .logo h1{font-size:18px;margin:0}
+  .wallet{background:rgba(255,255,255,0.08);padding:8px 12px;border-radius:10px;font-weight:600}
+  /* notice */
+  .notice{padding:10px 16px;background:#fff9db;border-left:4px solid #ffd54a;color:#4b4b00;font-size:14px}
+  /* content */
+  .container{padding:14px}
+  /* hero */
+  .hero{position:relative;background:linear-gradient(90deg,#061426,#0b2740);border-radius:12px;padding:16px;color:var(--white);overflow:hidden}
+  .hero .left{max-width:60%}
+  .hero h2{margin:0 0 8px;font-size:20px}
+  .hero p{margin:0 0 12px;color:#cfeef0}
+  .play-btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700}
+  .hero img{position:absolute;right:12px;top:8px;width:110px;height:auto;transform:translateY(-6px)}
+  /* cards */
+  .section-title{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px}
+  .cards{display:flex;gap:12px;overflow:auto;padding-bottom:6px}
+  .card{min-width:160px;background:linear-gradient(180deg,#051018,#072033);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.04);color:var(--white);position:relative}
+  .card img{width:100%;border-radius:6px}
+  .live-badge{position:absolute;top:8px;left:8px;background:#ff3b30;color:#fff;padding:4px 7px;border-radius:999px;font-size:12px;font-weight:700}
+  .card .title{margin-top:8px;font-weight:700;font-size:14px}
+  /* promo */
+  .promo{margin:16px 0;border-radius:10px;overflow:hidden;position:relative}
+  .promo img{width:100%;display:block}
+  /* bottom nav */
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;height:66px;background:#fff;border-top:1px solid #e6eef2;display:flex;align-items:center;justify-content:space-around;box-shadow:0 -6px 18px rgba(2,6,23,0.06)}
+  .nav-item{display:flex;flex-direction:column;align-items:center;font-size:12px;color:#27343a;text-decoration:none}
+  .nav-item .icon{width:26px;height:26px;border-radius:6px;background:#f1f7f8;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+  /* small */
+  .muted{color:var(--muted);font-size:13px}
+  /* responsiveness */
+  @media(min-width:720px){
+    .hero .left{max-width:50%}
+    .card{min-width:200px}
+    .bottom-nav{display:none}
+  }
+</style>
 </head>
 <body>
 
-    <h1>Ludo Live Game</h1>
+<header>
+  <div class="logo">
+    <div class="mark">★</div>
+    <div>
+      <h1>Star Ludo</h1>
+      <div style="font-size:12px;color:#dff6f0;margin-top:2px">Play live • Win instantly</div>
+    </div>
+  </div>
+  <div class="wallet">₹ <strong id="balance">0.00</strong> +</div>
+</header>
 
-    <div class="menu">
-        <a href="live.html">▶️ Start Live Game</a>
-        <a href="add-money.html">💰 Add Money</a>
-        <a href="wallet.html">🧾 My Wallet</a>
-        <a href="withdraw.html">💸 Withdraw</a>
-        <a href="creator-room.html">🎯 Creator Room</a>
-        <a href="support.html">📞 Support</a>
+<div class="notice">Notice: Star Ludo mein swagat hai — deposit/withdrawal ka support available hai. Koi problem ho to Support pe contact karein.</div>
+
+<main class="container">
+
+  <!-- Hero -->
+  <section class="hero" aria-label="Hero">
+    <div class="left">
+      <h2>Ludo Classic — Play Now</h2>
+      <p>Real-time matches • Quick withdrawals • Create or join rooms</p>
+      <a class="play-btn" href="live.html">▶ PLAY NOW</a>
+    </div>
+    <!-- decorative image -->
+    <img src="https://i.imgur.com/6oKX8wN.png" alt="ludo" />
+  </section>
+
+  <!-- Live Games -->
+  <div class="section-title">
+    <h3 style="margin:0">Live Games</h3>
+    <div class="muted">Today's popular</div>
+  </div>
+
+  <div class="cards" role="list">
+    <div class="card" role="listitem">
+      <div class="live-badge">LIVE</div>
+      <img src="https://i.imgur.com/7kR3wQp.jpg" alt="Ludo Classic" />
+      <div class="title">Ludo Classic</div>
+      <div class="muted">Play now • ₹1 - ₹500</div>
     </div>
 
-    <script src="script.js"></script>
+    <div class="card" role="listitem">
+      <div class="live-badge">LIVE</div>
+      <img src="https://i.imgur.com/2qHkz3m.jpg" alt="Star Ludo" />
+      <div class="title">Star Ludo</div>
+      <div class="muted">Fast match • 2 players</div>
+    </div>
+
+    <div class="card" role="listitem">
+      <div class="live-badge">LIVE</div>
+      <img src="https://i.imgur.com/7kR3wQp.jpg" alt="Support" />
+      <div class="title">Support</div>
+      <div class="muted">Contact help</div>
+    </div>
+  </div>
+
+  <!-- Promo -->
+  <div class="promo">
+    <img src="https://i.imgur.com/9QfQY0y.jpg" alt="withdrawal promo" />
+  </div>
+
+  <!-- quick actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+    <a href="add-money.html" style="flex:1;background:#0b6b6b;color:#fff;padding:12px;border-radius:8px;text-align:center;text-decoration:none;font-weight:700">Add Money</a>
+    <a href="wallet.html" style="flex:1;background:#0a9a8a;color:#fff;padding:12px;border-radius:8px;text-align:center;text-decoration:none;font-weight:700">My Wallet</a>
+  </div>
+
+  <div style="height:90px"></div> <!-- spacing above bottom nav -->
+</main>
+
+<!-- bottom navigation -->
+<nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+  <a href="index.html" class="nav-item"><div class="icon">🏠</div>Home</a>
+  <a href="wallet.html" class="nav-item"><div class="icon">💼</div>My wallet</a>
+  <a href="#" class="nav-item"><div class="icon">🤝</div>Refer</a>
+  <a href="#" class="nav-item"><div class="icon">📜</div>History</a>
+  <a href="account.html" class="nav-item"><div class="icon">👤</div>Account</a>
+</nav>
+
 </body>
 </html>
 
